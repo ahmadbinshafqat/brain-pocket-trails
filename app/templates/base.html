@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ app_name }}</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQPDn3QxkK3LHepuDqPNhhCLfrp7xU=" crossorigin="">
+</head>
+<body>
+  <header class="site-header">
+    <a href="/" class="brand">🥾 Pocket Trails</a>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    Built with OpenStreetMap data. Distances are approximate walking-loop estimates.
+  </footer>
+</body>
+</html>

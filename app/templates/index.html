@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Tiny walking plans from live map data</p>
+    <h1>Turn any neighborhood address into a 3-stop walking loop.</h1>
+    <p class="subtitle">Paste a starting location. Pocket Trails finds nearby points of interest, ranks compact options, and draws a simple one-page route.</p>
+    {% if request.query_params.get('error') %}
+      <div class="error">{{ request.query_params.get('error') }}</div>
+    {% endif %}
+    <form action="/plan" method="post" class="search-form">
+      <input name="query" required minlength="3" placeholder="e.g. Washington Square Park, New York" autofocus>
+      <button type="submit">Build my walk</button>
+    </form>
+    <p class="hint">Try a landmark, street address, or neighborhood center.</p>
+  </div>
+  <div class="card preview-card">
+    <h2>What you'll get</h2>
+    <ol>
+      <li>3 nearby stops from OpenStreetMap</li>
+      <li>Shortest loop among ranked stop combinations</li>
+      <li>Map, list, and approximate total distance</li>
+    </ol>
+  </div>
+</section>
+{% endblock %}

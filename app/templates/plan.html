@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="plan-header">
+  <div>
+    <p class="eyebrow">Your pocket trail</p>
+    <h1>{{ plan.start_query }}</h1>
+    <p class="subtitle">A {{ '%.2f'|format(km) }} km loop with {{ plan.stops|length }} nearby stops.</p>
+  </div>
+  <a class="button secondary" href="/">Plan another</a>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <h2>Walk plan</h2>
+    <ol class="stops">
+      <li>
+        <span class="badge start">Start</span>
+        <div><strong>Starting point</strong><small>{{ plan.start_query }}</small></div>
+      </li>
+      {% for stop in plan.stops %}
+      <li>
+        <span class="badge">{{ stop.stop_order }}</span>
+        <div>
+          <strong>{{ stop.name }}</strong>
+          <small>{{ stop.category }} · {{ stop.distance_m|round|int }} m from start</small>
+        </div>
+      </li>
+      {% endfor %}
+      <li>
+        <span class="badge start">↩</span>
+        <div><strong>Return to start</strong><small>Total loop: {{ plan.total_distance_m|round|int }} m</small></div>
+      </li>
+    </ol>
+  </div>
+  <div class="card map-card">
+    <div id="map"></div>
+  </div>
+</section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+  const coords = {{ coordinates | tojson }};
+  const stops = {{ plan.stops | map(attribute='name') | list | tojson }};
+  const map = L.map('map');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  const line = L.polyline(coords, {color: '#2563eb', weight: 4, opacity: 0.85}).addTo(map);
+  L.marker(coords[0]).addTo(map).bindPopup('Start');
+  for (let i = 1; i < coords.length - 1; i++) {
+    L.marker(coords[i]).addTo(map).bindPopup(`${i}. ${stops[i - 1]}`);
+  }
+  map.fitBounds(line.getBounds(), {padding: [30, 30]});
+</script>
+{% endblock %}
