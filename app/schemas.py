@@ -1,23 +1,53 @@
 from datetime import datetime
-from pydantic import BaseModel
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
-class StopOut(BaseModel):
+class AddressRequest(BaseModel):
+    address: str = Field(..., min_length=3, max_length=500)
+
+
+class GeocodedPlace(BaseModel):
+    query: str
+    display_name: str
+    lat: float
+    lon: float
+
+
+class POICandidate(BaseModel):
     name: str
     category: str
     lat: float
-    lng: float
-    distance_m: float
-    stop_order: int
+    lon: float
+    osm_id: Optional[str] = None
+    address: Optional[str] = None
+    score: float = 0.0
 
 
-class RoutePlanOut(BaseModel):
+class PointOfInterestRead(BaseModel):
     id: int
-    start_query: str
-    start_lat: float
-    start_lng: float
-    total_distance_m: float
-    generated_at: datetime
-    stops: list[StopOut]
+    name: str
+    category: str
+    lat: float
+    lon: float
+    stop_order: int
+    osm_id: Optional[str] = None
+    address: Optional[str] = None
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
+
+
+class RoutePlanRead(BaseModel):
+    id: int
+    title: str
+    start_lat: float
+    start_lon: float
+    total_distance_km: float
+    share_token: str
+    created_at: datetime
+    pois: List[PointOfInterestRead]
+
+    class Config:
+        from_attributes = True

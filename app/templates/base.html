@@ -1,21 +1,33 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ app_name }}</title>
-  <link rel="stylesheet" href="/static/styles.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQPDn3QxkK3LHepuDqPNhhCLfrp7xU=" crossorigin="">
-</head>
-<body>
-  <header class="site-header">
-    <a href="/" class="brand">🥾 Pocket Trails</a>
-  </header>
-  <main>
-    {% block content %}{% endblock %}
-  </main>
-  <footer>
-    Built with OpenStreetMap data. Distances are approximate walking-loop estimates.
-  </footer>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQhYxwF9s0EpYQ8pWCQ3wi5j+fhnHB8=" crossorigin="" />
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}" />
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="{{ app_name }} home">
+        <span class="brand-mark">🥾</span>
+        <span>{{ app_name }}</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/">Plan a loop</a>
+      </nav>
+    </header>
+
+    <main class="page-shell">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <p>Walking loops powered by OpenStreetMap data. Distances are approximate.</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+  </body>
 </html>

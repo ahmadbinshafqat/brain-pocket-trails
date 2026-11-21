@@ -1,56 +1,98 @@
 {% extends "base.html" %}
+
+{% block title %}{{ plan.title }} · {{ app_name }}{% endblock %}
+
 {% block content %}
-<section class="plan-header">
+<section class="plan-hero">
+  {% if is_shared_view %}
+    <div class="shared-banner">You are viewing a read-only shared walking loop.</div>
+  {% endif %}
+
   <div>
-    <p class="eyebrow">Your pocket trail</p>
-    <h1>{{ plan.start_query }}</h1>
-    <p class="subtitle">A {{ '%.2f'|format(km) }} km loop with {{ plan.stops|length }} nearby stops.</p>
+    <p class="eyebrow">Saved walking loop</p>
+    <h1>{{ plan.title }}</h1>
+    <p class="muted">Starts near {{ plan.search.display_name }}</p>
   </div>
-  <a class="button secondary" href="/">Plan another</a>
+  <div class="stat-card">
+    <span class="stat-value">{{ "%.1f"|format(plan.total_distance_km) }}</span>
+    <span class="stat-label">km loop</span>
+  </div>
 </section>
 
-<section class="grid">
-  <div class="card">
-    <h2>Walk plan</h2>
-    <ol class="stops">
-      <li>
-        <span class="badge start">Start</span>
-        <div><strong>Starting point</strong><small>{{ plan.start_query }}</small></div>
-      </li>
-      {% for stop in plan.stops %}
-      <li>
-        <span class="badge">{{ stop.stop_order }}</span>
-        <div>
-          <strong>{{ stop.name }}</strong>
-          <small>{{ stop.category }} · {{ stop.distance_m|round|int }} m from start</small>
-        </div>
-      </li>
+<section class="share-card" aria-labelledby="share-heading">
+  <div>
+    <h2 id="share-heading">Share this route</h2>
+    <p class="muted">Send this read-only link so someone else can reopen the same saved plan.</p>
+  </div>
+  <div class="share-controls">
+    <input id="share-url" class="share-input" type="text" value="{{ share_url }}" readonly aria-label="Shareable route link" />
+    <button id="copy-share-link" class="button button-secondary" type="button">Copy link</button>
+  </div>
+  <p id="copy-status" class="copy-status" role="status" aria-live="polite"></p>
+</section>
+
+<section class="plan-layout">
+  <div class="map-card">
+    <div id="map" class="map" aria-label="Map of walking loop"></div>
+  </div>
+
+  <aside class="stops-card">
+    <h2>Stops</h2>
+    <ol class="stop-list">
+      {% for poi in plan.pois %}
+        <li>
+          <span class="stop-number">{{ poi.stop_order }}</span>
+          <div>
+            <strong>{{ poi.name }}</strong>
+            <p>{{ poi.category }}{% if poi.address %} · {{ poi.address }}{% endif %}</p>
+          </div>
+        </li>
       {% endfor %}
-      <li>
-        <span class="badge start">↩</span>
-        <div><strong>Return to start</strong><small>Total loop: {{ plan.total_distance_m|round|int }} m</small></div>
-      </li>
     </ol>
-  </div>
-  <div class="card map-card">
-    <div id="map"></div>
-  </div>
+    <a class="button" href="/">Create another loop</a>
+  </aside>
 </section>
+{% endblock %}
 
+{% block scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-  const coords = {{ coordinates | tojson }};
-  const stops = {{ plan.stops | map(attribute='name') | list | tojson }};
+  const start = { lat: {{ plan.start_lat }}, lon: {{ plan.start_lon }} };
+  const stops = [
+    {% for poi in plan.pois %}
+      { name: {{ poi.name|tojson }}, category: {{ poi.category|tojson }}, lat: {{ poi.lat }}, lon: {{ poi.lon }}, order: {{ poi.stop_order }} }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
   const map = L.map('map');
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
-  const line = L.polyline(coords, {color: '#2563eb', weight: 4, opacity: 0.85}).addTo(map);
-  L.marker(coords[0]).addTo(map).bindPopup('Start');
-  for (let i = 1; i < coords.length - 1; i++) {
-    L.marker(coords[i]).addTo(map).bindPopup(`${i}. ${stops[i - 1]}`);
-  }
-  map.fitBounds(line.getBounds(), {padding: [30, 30]});
+
+  const points = [[start.lat, start.lon], ...stops.map((stop) => [stop.lat, stop.lon]), [start.lat, start.lon]];
+  const route = L.polyline(points, { color: '#2563eb', weight: 4, opacity: 0.85 }).addTo(map);
+
+  L.marker([start.lat, start.lon]).addTo(map).bindPopup('<strong>Start / finish</strong>');
+  stops.forEach((stop) => {
+    L.marker([stop.lat, stop.lon]).addTo(map).bindPopup(`<strong>${stop.order}. ${stop.name}</strong><br>${stop.category}`);
+  });
+
+  map.fitBounds(route.getBounds(), { padding: [28, 28] });
+
+  const copyButton = document.getElementById('copy-share-link');
+  const shareInput = document.getElementById('share-url');
+  const copyStatus = document.getElementById('copy-status');
+
+  copyButton?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(shareInput.value);
+      copyStatus.textContent = 'Copied share link.';
+    } catch (error) {
+      shareInput.select();
+      document.execCommand('copy');
+      copyStatus.textContent = 'Copied share link.';
+    }
+  });
 </script>
 {% endblock %}
